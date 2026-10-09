@@ -43,30 +43,6 @@ SERIES = {
     "BAMLC0A4CBBB": ("ICE BofA BBB US Corporate OAS", "%", "Daily", "Credit"),
     "BAA10Y": ("Moody's Baa yield minus 10Y Treasury", "%", "Daily", "Credit"),
     "AAA10Y": ("Moody's Aaa yield minus 10Y Treasury", "%", "Daily", "Credit"),
-    # Bank balance sheet (H.8, weekly, SA, $bn)
-    "TOTLL": ("Loans & leases, all commercial banks", "$bn", "Weekly", "Banks"),
-    "DPSACBW027SBOG": ("Deposits, all commercial banks", "$bn", "Weekly", "Banks"),
-    "TOTCI": ("C&I loans, all commercial banks", "$bn", "Weekly", "Banks"),
-    "CREACBW027SBOG": ("CRE loans, all commercial banks", "$bn", "Weekly", "Banks"),
-    "CCLACBW027SBOG": ("Credit card & revolving loans, all commercial banks", "$bn", "Weekly", "Banks"),
-    "DPSSCBW027SBOG": ("Deposits, small domestically chartered banks", "$bn", "Weekly", "Banks"),
-    "LLBSCBW027SBOG": ("Loans & leases, small domestically chartered banks", "$bn", "Weekly", "Banks"),
-    "DPSLCBW027SBOG": ("Deposits, large domestically chartered banks", "$bn", "Weekly", "Banks"),
-    "LLBLCBW027SBOG": ("Loans & leases, large domestically chartered banks", "$bn", "Weekly", "Banks"),
-    # Deposit mix: H.8 weekly (commercial banks, SA, $bn)
-    "LTDACBW027SBOG": ("H.8 Large time deposits, all commercial banks", "$bn", "Weekly", "DepMix"),
-    "ODSACBW027SBOG": ("H.8 Other deposits (ex large time), all commercial banks", "$bn", "Weekly", "DepMix"),
-    "LTDLCBW027SBOG": ("H.8 Large time deposits, large domestic banks", "$bn", "Weekly", "DepMix"),
-    "ODSLCBW027SBOG": ("H.8 Other deposits, large domestic banks", "$bn", "Weekly", "DepMix"),
-    "LTDSCBW027SBOG": ("H.8 Large time deposits, small domestic banks", "$bn", "Weekly", "DepMix"),
-    "ODSSCBW027SBOG": ("H.8 Other deposits, small domestic banks", "$bn", "Weekly", "DepMix"),
-    # Deposit mix: H.6 monthly (all depository institutions, SA, $bn)
-    "DEMDEPSL": ("H.6 Demand deposits", "$bn", "Monthly", "DepMix"),
-    "MDLM": ("H.6 Other liquid deposits (savings, MMDA, OCDs; from May 2020)", "$bn", "Monthly", "DepMix"),
-    "SAVINGSL": ("H.6 Savings deposits incl. MMDA (discontinued Apr 2020)", "$bn", "Monthly", "DepMix"),
-    "OCDSL": ("H.6 Other checkable deposits (discontinued Apr 2020)", "$bn", "Monthly", "DepMix"),
-    "STDSL": ("H.6 Small-denomination time deposits", "$bn", "Monthly", "DepMix"),
-    "RMFSL": ("H.6 Retail money market funds", "$bn", "Monthly", "DepMix"),
     # Credit quality (quarterly, SA %)
     "DRALACBS": ("Delinquency rate, all loans", "%", "Quarterly", "Quality"),
     "DRCCLACBS": ("Delinquency rate, credit cards", "%", "Quarterly", "Quality"),
@@ -355,20 +331,6 @@ def at_or_before(obs, date_s, max_days):
     return None
 
 
-def contribution(comp, total, tol_days=3):
-    """Contribution of a component to total YoY growth, in pp: (C_t - C_t-1y) / T_t-1y * 100."""
-    tmap = dict(total)
-    out = []
-    for date_s, v in comp:
-        prior = value_on_or_before(comp, minus_years(d(date_s)) + dt.timedelta(days=tol_days))
-        if not prior or (d(date_s) - d(prior[0])).days < 360:
-            continue
-        tp = tmap.get(prior[0])
-        if tp:
-            out.append([date_s, round((v - prior[1]) / tp * 100, 3)])
-    return out
-
-
 # Change conventions (used by tiles and the summary table):
 #   bp  = (latest - prior) * 100   for % series (rates, yields, spreads, unemployment, delinquency, YoY growth)
 #   pct = relative % change         for level series ($bn, payrolls, claims, starts, price indices, GDP)
@@ -391,12 +353,6 @@ TILES = [
     ("MOVE", "MOVE (Tsy vol)", "pts", -1, "num2"),
     ("KRE_SI_NOTIONAL", "KRE short interest ($)", "pct", 0, "bn2"),
     ("MORTGAGE30US", "30Y mortgage", "bp", 0, "pct2"),
-    ("DPSACBW027SBOG", "Bank deposits", "pct", 1, "tn"),
-    ("TOTLL", "Bank loans & leases", "pct", 1, "tn"),
-    ("DPSSCBW027SBOG", "Small-bank deposits", "pct", 1, "tn"),
-    ("H6_DDA_SHARE", "DDA share (H.6)", "bp", 1, "pct2"),
-    ("H6_STD_SHARE", "Small time dep. share (H.6)", "bp", -1, "pct2"),
-    ("LTD_SHARE_ALL", "Large time dep. share (H.8)", "bp", -1, "pct2"),
     ("UNRATE", "Unemployment", "bp", -1, "pct1"),
     ("ICSA", "Initial claims", "pct", -1, "k"),
     ("CPI_YOY", "CPI YoY", "bp", 0, "pct2"),
@@ -424,45 +380,6 @@ SUMMARY = [
     ("Credit Spreads", "BAMLC0A4CBBB", "ICE BofA BBB OAS", "bp", -1),
     ("Credit Spreads", "BAA10Y", "Moody's Baa − 10Y", "bp", -1),
     ("Credit Spreads", "AAA10Y", "Moody's Aaa − 10Y", "bp", -1),
-    ("Bank Deposits & Loans", "DPSACBW027SBOG", "Deposits, all commercial banks", "pct", 1),
-    ("Bank Deposits & Loans", "DPSLCBW027SBOG", "Deposits, large domestic banks", "pct", 1),
-    ("Bank Deposits & Loans", "DPSSCBW027SBOG", "Deposits, small domestic banks", "pct", 1),
-    ("Bank Deposits & Loans", "TOTLL", "Loans & leases, all commercial banks", "pct", 1),
-    ("Bank Deposits & Loans", "LLBLCBW027SBOG", "Loans & leases, large domestic banks", "pct", 1),
-    ("Bank Deposits & Loans", "LLBSCBW027SBOG", "Loans & leases, small domestic banks", "pct", 1),
-    ("Bank Deposits & Loans", "TOTCI", "C&I loans", "pct", 1),
-    ("Bank Deposits & Loans", "CREACBW027SBOG", "CRE loans", "pct", 1),
-    ("Bank Deposits & Loans", "CCLACBW027SBOG", "Credit card & revolving loans", "pct", 1),
-    ("Bank Deposits & Loans", "DPSACBW027SBOG_YOY", "Deposit growth YoY, all banks", "bp", 1),
-    ("Bank Deposits & Loans", "DPSLCBW027SBOG_YOY", "Deposit growth YoY, large banks", "bp", 1),
-    ("Bank Deposits & Loans", "DPSSCBW027SBOG_YOY", "Deposit growth YoY, small banks", "bp", 1),
-    ("Bank Deposits & Loans", "TOTLL_YOY", "Loan growth YoY, all banks", "bp", 1),
-    ("Bank Deposits & Loans", "LLBLCBW027SBOG_YOY", "Loan growth YoY, large banks", "bp", 1),
-    ("Bank Deposits & Loans", "LLBSCBW027SBOG_YOY", "Loan growth YoY, small banks", "bp", 1),
-    ("Bank Deposits & Loans", "TOTCI_YOY", "C&I loan growth YoY", "bp", 1),
-    ("Bank Deposits & Loans", "CREACBW027SBOG_YOY", "CRE loan growth YoY", "bp", 1),
-    ("Bank Deposits & Loans", "CCLACBW027SBOG_YOY", "Card loan growth YoY", "bp", 1),
-    ("Deposit Mix", "LTDACBW027SBOG", "H.8 Large time deposits, all banks", "pct", 0),
-    ("Deposit Mix", "ODSACBW027SBOG", "H.8 Other deposits, all banks", "pct", 1),
-    ("Deposit Mix", "LTDLCBW027SBOG", "H.8 Large time deposits, large banks", "pct", 0),
-    ("Deposit Mix", "ODSLCBW027SBOG", "H.8 Other deposits, large banks", "pct", 1),
-    ("Deposit Mix", "LTDSCBW027SBOG", "H.8 Large time deposits, small banks", "pct", 0),
-    ("Deposit Mix", "ODSSCBW027SBOG", "H.8 Other deposits, small banks", "pct", 1),
-    ("Deposit Mix", "LTD_SHARE_ALL", "H.8 Large time share of deposits, all banks", "bp", -1),
-    ("Deposit Mix", "LTD_SHARE_LARGE", "H.8 Large time share, large banks", "bp", -1),
-    ("Deposit Mix", "LTD_SHARE_SMALL", "H.8 Large time share, small banks", "bp", -1),
-    ("Deposit Mix", "LTDACBW027SBOG_YOY", "H.8 Large time deposit growth YoY", "bp", 0),
-    ("Deposit Mix", "ODSACBW027SBOG_YOY", "H.8 Other deposit growth YoY", "bp", 1),
-    ("Deposit Mix", "DEMDEPSL", "H.6 Demand deposits", "pct", 1),
-    ("Deposit Mix", "OLD_SPLICED", "H.6 Other liquid deposits (savings/MMDA/OCD)", "pct", 1),
-    ("Deposit Mix", "STDSL", "H.6 Small-denomination time deposits", "pct", 0),
-    ("Deposit Mix", "H6_TOTAL", "H.6 Total (DDA + other liquid + small time)", "pct", 1),
-    ("Deposit Mix", "RMFSL", "H.6 Retail money market funds", "pct", -1),
-    ("Deposit Mix", "H6_DDA_SHARE", "H.6 DDA share of deposits", "bp", 1),
-    ("Deposit Mix", "H6_OLD_SHARE", "H.6 Other liquid share of deposits", "bp", 0),
-    ("Deposit Mix", "H6_STD_SHARE", "H.6 Small time share of deposits", "bp", -1),
-    ("Deposit Mix", "RMF_PCT_DEP", "H.6 Retail MMF as % of deposits", "bp", -1),
-    ("Deposit Mix", "H6_TOTAL_YOY", "H.6 Total deposit growth YoY", "bp", 1),
     ("Credit Quality", "DRALACBS", "Delinquency rate, all loans", "bp", -1),
     ("Credit Quality", "DRCCLACBS", "Delinquency rate, credit cards", "bp", -1),
     ("Credit Quality", "DRCRELEXFACBS", "Delinquency rate, CRE (ex farmland)", "bp", -1),
@@ -747,50 +664,13 @@ def main():
         return "Derived: " + " + ".join(x.split(" (")[0] for x in srcs)
 
     g = lambda k: series.get(k, {}).get("data") or []
-    for k in ["TOTLL", "DPSACBW027SBOG", "TOTCI", "CREACBW027SBOG", "CCLACBW027SBOG",
-              "DPSSCBW027SBOG", "LLBSCBW027SBOG", "DPSLCBW027SBOG", "LLBLCBW027SBOG"]:
-        if g(k):
-            add(k + "_YOY", series[k]["title"] + " — YoY %", "%", "Weekly", "Banks", yoy(g(k)), [k])
     add("CPI_YOY", "CPI-U YoY %", "%", "Monthly", "Macro", yoy(g("CPIAUCSL")), ["CPIAUCSL"])
     add("COREPCE_YOY", "Core PCE YoY %", "%", "Monthly", "Macro", yoy(g("PCEPILFE")), ["PCEPILFE"])
     add("PAYEMS_CHG", "Nonfarm payrolls, monthly change (k)", "k", "Monthly", "Macro", diff(g("PAYEMS")), ["PAYEMS"])
     add("GDP_QOQ", "Real GDP growth, QoQ SAAR %", "%", "Quarterly", "Macro", qoq_saar(g("GDPC1")), ["GDPC1"])
     add("GDP_YOY", "Real GDP growth, YoY %", "%", "Quarterly", "Macro", yoy(g("GDPC1")), ["GDPC1"])
-    # ---- Deposit mix: H.8 (weekly, commercial banks)
-    for k in ["LTDACBW027SBOG", "ODSACBW027SBOG"]:
-        if g(k):
-            add(k + "_YOY", series[k]["title"] + " — YoY %", "%", "Weekly", "DepMix", yoy(g(k)), [k])
-    share = lambda a, b: (a / b * 100) if b else None
-    add("LTD_SHARE_ALL", "H.8 Large time deposits as % of deposits, all commercial banks", "%", "Weekly", "DepMix",
-        combine(share, g("LTDACBW027SBOG"), g("DPSACBW027SBOG")), ["LTDACBW027SBOG", "DPSACBW027SBOG"])
-    add("LTD_SHARE_LARGE", "H.8 Large time deposits as % of deposits, large domestic banks", "%", "Weekly", "DepMix",
-        combine(share, g("LTDLCBW027SBOG"), g("DPSLCBW027SBOG")), ["LTDLCBW027SBOG", "DPSLCBW027SBOG"])
-    add("LTD_SHARE_SMALL", "H.8 Large time deposits as % of deposits, small domestic banks", "%", "Weekly", "DepMix",
-        combine(share, g("LTDSCBW027SBOG"), g("DPSSCBW027SBOG")), ["LTDSCBW027SBOG", "DPSSCBW027SBOG"])
-    add("H8_CONTRIB_LTD", "H.8 Contribution to deposit YoY: large time (pp)", "pp", "Weekly", "DepMix",
-        contribution(g("LTDACBW027SBOG"), g("DPSACBW027SBOG")), ["LTDACBW027SBOG", "DPSACBW027SBOG"])
-    add("H8_CONTRIB_OTHER", "H.8 Contribution to deposit YoY: other deposits (pp)", "pp", "Weekly", "DepMix",
-        contribution(g("ODSACBW027SBOG"), g("DPSACBW027SBOG")), ["ODSACBW027SBOG", "DPSACBW027SBOG"])
-    # ---- Deposit mix: H.6 (monthly, all depository institutions)
-    old_pre = combine(lambda a, b: a + b, g("SAVINGSL"), g("OCDSL"))
-    mdlm = g("MDLM")
-    if mdlm:
-        first_m = mdlm[0][0]
-        add("OLD_SPLICED", "H.6 Other liquid deposits (savings+OCD before May 2020, MDLM after)", "$bn", "Monthly",
-            "DepMix", [o for o in old_pre if o[0] < first_m] + mdlm, ["MDLM", "SAVINGSL", "OCDSL"])
-    add("H6_TOTAL", "H.6 Deposits: demand + other liquid + small time", "$bn", "Monthly", "DepMix",
-        combine(lambda a, b, c: a + b + c, g("DEMDEPSL"), g("OLD_SPLICED"), g("STDSL")),
-        ["DEMDEPSL", "MDLM", "SAVINGSL", "OCDSL", "STDSL"])
-    for k, nm in [("DEMDEPSL", "DDA"), ("OLD_SPLICED", "OLD"), ("STDSL", "STD")]:
-        add(f"H6_{nm}_SHARE", f"H.6 {series.get(k, {}).get('title', k)} — share of deposits", "%", "Monthly", "DepMix",
-            combine(share, g(k), g("H6_TOTAL")), [k, "H6_TOTAL"])
-        add(f"H6_CONTRIB_{nm}", f"H.6 Contribution to deposit YoY: {nm} (pp)", "pp", "Monthly", "DepMix",
-            contribution(g(k), g("H6_TOTAL")), [k, "H6_TOTAL"])
-    for k in ["DEMDEPSL", "OLD_SPLICED", "STDSL", "RMFSL", "H6_TOTAL"]:
-        if g(k):
-            add(k + "_YOY", series[k]["title"] + " — YoY %", "%", "Monthly", "DepMix", yoy(g(k)), [k])
-    add("RMF_PCT_DEP", "H.6 Retail money market funds as % of deposits", "%", "Monthly", "DepMix",
-        combine(share, g("RMFSL"), g("H6_TOTAL")), ["RMFSL", "H6_TOTAL"])
+    # (H.8 bank balance sheet and H.6 deposit-mix series moved to the research hub on 2026-10-09;
+    #  see ehines12/research-hub config/dashboards/h8.json. Rollback: git tag pre-h8-move.)
     # ---- KRE short interest: notional = SI shares x KRE close on settlement date
     si, close, so = g("KRE_SI_SHARES"), g("KRE_CLOSE"), g("KRE_SO")
     price_rows, notional, pct_so, reports = [], [], [], []
