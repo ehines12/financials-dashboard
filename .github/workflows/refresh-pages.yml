@@ -1,0 +1,103 @@
+name: Refresh data and deploy dashboard
+
+# Cron is UTC. Times chosen to work for both CDT (UTC-5) and CST (UTC-6, from Nov 1):
+#   14:47 UTC  weekdays  9:47 AM CDT /  8:47 AM CST  (after the 8:30 CT open)
+#   17:17 UTC  weekdays 12:17 PM CDT / 11:17 AM CST
+#   19:47 UTC  weekdays  2:47 PM CDT /  1:47 PM CST
+#   22:13 UTC  weekdays  5:13 PM CDT /  4:13 PM CST  (post-close: picks up the day's closing bar)
+#   21:43 UTC  Fridays   4:43 PM CDT /  3:43 PM CST  (after the H.8 release, 4:15 PM ET)
+on:
+  schedule:
+    - cron: "47 14 * * 1-5"
+    - cron: "17 17 * * 1-5"
+    - cron: "47 19 * * 1-5"
+    - cron: "13 22 * * 1-5"
+    - cron: "43 21 * * 5"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # commit the accumulating FINRA cache + weekly heartbeat back to main
+  pages: write
+  id-token: write
+
+concurrency:
+  group: refresh-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      TZ: America/Chicago
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # Latest data/caches from previous runs (falls back to the copies committed in the repo)
+      - name: Restore data cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            web/data
+            cache
+          key: dashboard-data-${{ github.run_id }}
+          restore-keys: dashboard-data-
+
+      - name: Fetch data (FRED, Yahoo, FINRA, State Street)
+        run: |
+          set -o pipefail
+          python fetch_data.py 2>&1 | tee fetch.log
+
+      - name: Per-source fetch summary
+        if: always()
+        run: python ci_summary.py
+
+      - name: Build self-contained snapshot
+        run: |
+          mkdir -p _site
+          python export_html.py --no-fetch --out _site/index.html
+          touch _site/.nojekyll
+          grep -o '<title>[^<]*</title>' _site/index.html
+
+      - name: Save data cache
+        if: always()
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            web/data
+            cache
+          key: dashboard-data-${{ github.run_id }}
+
+      # Small commits only: FINRA short-interest history (accumulates) and a weekly heartbeat.
+      # The heartbeat guarantees repository activity at least weekly, so GitHub does not
+      # auto-disable the schedule after 60 days of inactivity.
+      - name: Commit accumulated cache + heartbeat
+        run: |
+          date -u +%G-W%V > state/heartbeat.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cache/alloc_si.json state/heartbeat.txt
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+          git commit -m "data: update FINRA SI cache / heartbeat ($(date -u +%Y-%m-%dT%H:%MZ))"
+          for i in 1 2 3; do git pull --rebase -X theirs origin main && git push origin HEAD:main && break; sleep 5; done
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

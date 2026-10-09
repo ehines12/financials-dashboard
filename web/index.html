@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Macro Dashboard · US Financials</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%234f8cff%22/%3E%3Cpath d=%22M3 11l3-3 3 2 4-5%22 stroke=%22white%22 stroke-width=%221.6%22 fill=%22none%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script src="vendor/chart.umd.min.js"></script>
+<script src="vendor/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <h1>Macro Dashboard <span class="sub">US Financials</span></h1>
+    <div class="meta">Data: FRED (St. Louis Fed); MOVE &amp; KRE prices via Yahoo Finance; KRE short interest: FINRA · <span id="updLabel">Last updated</span> <b id="updated">…</b> · <span id="okcount"></span></div>
+  </div>
+  <nav class="sections">
+    <a href="#summary">Summary</a><a href="#rates">Rates &amp; Curve</a><a href="#credit">Credit</a><a href="#banks">Bank Deposits &amp; Loans</a>
+    <a href="#depmix">Deposit Mix</a><a href="#quality">Credit Quality</a><a href="#housing">Housing</a><a href="#labor">Labor &amp; Inflation</a><a href="#stress">Market Stress</a><a href="#positioning">Positioning</a><a href="#alloc" class="navalloc">Fin. Allocation</a>
+  </nav>
+  <div class="controls">
+    <div class="range" id="range">
+      <button data-r="1">1Y</button><button data-r="3">3Y</button><button data-r="5" class="on">5Y</button><button data-r="10">10Y</button><button data-r="0">Max</button>
+    </div>
+    <button id="refresh" class="refresh" title="Pull the latest data from FRED now">↻ Refresh data</button>
+  </div>
+</header>
+
+<main>
+  <section id="tiles" class="tiles"></section>
+
+  <section class="sec" id="summary"><h2>Summary of changes <span class="hint">vs the observation on or before each lookback date · bp for % series (rates, spreads, unemployment, delinquency, growth rates) · % change for levels · points for VIX, MOVE &amp; SLOOS · – = not meaningful at the series frequency · also in data/summary.csv</span></h2><div id="summaryTable"></div></section>
+
+  <section class="sec" id="rates"><h2>Rates &amp; Curve</h2><div class="grid c2" data-sec="rates"></div></section>
+  <section class="sec" id="credit"><h2>Credit Spreads</h2><div class="grid c3" data-sec="credit"></div></section>
+  <section class="sec" id="banks"><h2>Bank Deposits &amp; Loans <span class="hint">H.8, weekly, seasonally adjusted · YoY growth</span></h2><div class="grid c2" data-sec="banks"></div></section>
+  <section class="sec" id="depmix"><h2>Deposit Mix <span class="hint">H.8 weekly = commercial banks (all / large / small domestic) · H.6 monthly = all depository institutions incl. thrifts &amp; credit unions · SA, from FRED</span></h2><div class="grid c2" data-sec="depmix"></div></section>
+  <section class="sec" id="quality"><h2>Credit Quality <span class="hint">quarterly, all commercial banks</span></h2><div class="grid c3" data-sec="quality"></div></section>
+  <section class="sec" id="housing"><h2>Housing</h2><div class="grid c3" data-sec="housing"></div></section>
+  <section class="sec" id="labor"><h2>Labor &amp; Inflation</h2><div class="grid c3" data-sec="labor"></div></section>
+  <section class="sec" id="stress"><h2>Market Stress</h2><div class="grid c2" data-sec="stress"></div></section>
+
+  <section class="sec" id="positioning"><h2>Positioning <span class="hint">KRE (SPDR S&amp;P Regional Banking ETF) short interest · FINRA, twice monthly, published ~7 business days after settlement</span></h2><div class="grid c2" data-sec="positioning"></div></section>
+
+  <section class="sec" id="alloc"><h2>Financials Time Allocation <span class="hint">Where to spend research time across financials sub-groups. Prices: Yahoo Finance · Short interest: FINRA · SPDR shares outstanding: State Street · Factors: FRED + MOVE</span></h2>
+    <div class="almeta" id="alMeta"></div>
+    <div class="sub" id="alloc-score"><h3 class="subh">“Where to look” score <span class="hint">ranked; higher = more unusual on relative performance, positioning, macro-beta shift or technical stretch</span></h3><div class="card wide tblcard" id="alScore"></div><div class="note method" id="alMethod"></div></div>
+    <div class="sub" id="alloc-perf"><h3 class="subh">1 · Relative performance by group <span class="hint">vs XLF, SPY, IWM</span></h3><div class="card wide tblcard" id="alPerf"></div><div class="grid c2" data-sec="alloc-perf"></div></div>
+    <div class="sub" id="alloc-size"><h3 class="subh">2 · Size &amp; style within financials vs the broad market</h3><div class="card wide tblcard" id="alPairs"></div><div class="grid c2" data-sec="alloc-size"></div></div>
+    <div class="sub" id="alloc-pos"><h3 class="subh">3 · Positioning by group <span class="hint">FINRA short interest; SPDR shares outstanding / implied flows</span></h3><div class="card wide tblcard" id="alPos"></div><div class="grid c2" data-sec="alloc-pos"></div></div>
+    <div class="sub" id="alloc-macro"><h3 class="subh">4 · Macro sensitivity <span class="hint">rolling betas and correlations to Δ10Y, Δ2s10s, ΔHY OAS, ΔMOVE</span></h3><div class="card wide tblcard" id="alMacro"></div><div class="grid c2" data-sec="alloc-macro"></div></div>
+    <div class="sub" id="alloc-val"><h3 class="subh">5 · Valuation / sentiment proxies</h3><div class="card wide tblcard" id="alVal"></div><div id="alPlaceholders"></div></div>
+  </section>
+  <section class="sec" id="status"><h2>Data status</h2><div id="statusTable"></div></section>
+</main>
+<footer>Source: FRED®, Federal Reserve Bank of St. Louis; MOVE index and KRE prices from the Yahoo Finance chart API; KRE short interest from FINRA; KRE shares outstanding from State Street. ICE BofA OAS series are limited by FRED to ~3 years of history. Changes: rates &amp; spreads in bp, levels in %. Times shown in Central (CT).</footer>
+<script src="alloc.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
