@@ -1,18 +1,14 @@
 name: Refresh data and deploy dashboard
 
-# Cron is UTC. Times chosen to work for both CDT (UTC-5) and CST (UTC-6, from Nov 1):
-#   14:47 UTC  weekdays  9:47 AM CDT /  8:47 AM CST  (after the 8:30 CT open)
-#   17:17 UTC  weekdays 12:17 PM CDT / 11:17 AM CST
-#   19:47 UTC  weekdays  2:47 PM CDT /  1:47 PM CST
-#   22:13 UTC  weekdays  5:13 PM CDT /  4:13 PM CST  (post-close: picks up the day's closing bar)
-#   21:43 UTC  Fridays   4:43 PM CDT /  3:43 PM CST  (after the H.8 release, 4:15 PM ET)
+# Target: weekdays at 6 AM, 9 AM, noon, 3 PM and 6 PM Central (a few minutes past the hour,
+# since GitHub's top-of-hour cron slots are the most congested).
+# Cron is UTC and has no DST, so each slot is listed for both CDT (UTC-5) and CST (UTC-6);
+# the "gate" job runs first and only lets through the slot that matches Central local time
+# (hour 6/9/12/15/18, Mon-Fri). Manual runs (workflow_dispatch) always go through.
 on:
   schedule:
-    - cron: "47 14 * * 1-5"
-    - cron: "17 17 * * 1-5"
-    - cron: "47 19 * * 1-5"
-    - cron: "13 22 * * 1-5"
-    - cron: "43 21 * * 5"
+    - cron: "7 11,12,14,15,17,18,20,21,23 * * *"
+    - cron: "7 0 * * *"
   workflow_dispatch:
 
 permissions:
@@ -25,7 +21,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          h=$(TZ=America/Chicago date +%-H); d=$(TZ=America/Chicago date +%u)
+          echo "Central time now: $(TZ=America/Chicago date '+%a %H:%M %Z')"
+          case "$h" in 6|9|12|15|18) ok=1;; *) ok=0;; esac
+          if [ "$ok" = 1 ] && [ "$d" -le 5 ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "go=false" >> "$GITHUB_OUTPUT"; fi
+
   build:
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
