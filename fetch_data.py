@@ -342,10 +342,7 @@ def at_or_before(obs, date_s, max_days):
 TILES = [
     ("DFF", "Fed funds (eff.)", "bp", 0, "pct2"),
     ("SOFR", "SOFR", "bp", 0, "pct2"),
-    ("DGS2", "2Y Treasury", "bp", 0, "pct2"),
-    ("DGS10", "10Y Treasury", "bp", 0, "pct2"),
-    ("T10Y2Y", "2s10s curve", "bp", 0, "bp"),
-    ("T10Y3M", "3m10y curve", "bp", 0, "bp"),
+    # Treasury yields / 2s10s / 3m10y single-value tiles removed: live CNBC strip covers them.
     ("BAMLH0A0HYM2", "HY OAS", "bp", -1, "bp"),
     ("BAMLC0A0CM", "IG OAS", "bp", -1, "bp"),
     ("BAMLC0A4CBBB", "BBB OAS", "bp", -1, "bp"),
