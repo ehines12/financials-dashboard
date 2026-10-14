@@ -50,6 +50,9 @@ def main():
     alloc_tag = '<script src="alloc.js"></script>'
     if alloc_tag in html:
         html = html.replace(alloc_tag, "")
+    tsy_path = os.path.join(WEB, "data", "treasury.json")
+    tsy = open(tsy_path).read() if os.path.exists(tsy_path) else "null"
+    html = html.replace('<script src="treasury.js"></script>', f"<script>window.__TSY_SNAPSHOT__ = {script_safe(tsy)};</script>\n<script>\n{script_safe(read('treasury.js'))}\n</script>")
     app_tag = '<script src="app.js"></script>'
     assert app_tag in html
     alloc_js = f"<script>\n{script_safe(read('alloc.js'))}\n</script>\n" if os.path.exists(os.path.join(WEB, "alloc.js")) else ""

@@ -80,6 +80,10 @@ jobs:
           set -o pipefail
           python fetch_data.py 2>&1 | tee fetch.log
 
+      - name: Treasury quote snapshot (CNBC/Tradeweb fallback for the live strip)
+        continue-on-error: true
+        run: python fetch_treasury.py
+
       - name: Per-source fetch summary
         if: always()
         run: python ci_summary.py
