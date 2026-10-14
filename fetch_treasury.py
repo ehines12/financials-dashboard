@@ -1,7 +1,7 @@
 """Snapshot of CNBC/Tradeweb Treasury quotes -> web/data/treasury.json (fallback for the live strip).
 Keeps the previous good quote per symbol if CNBC fails or omits one."""
 import json, os, subprocess, datetime
-SYMS = ["US1M","US3M","US6M","US1Y","US2Y","US5Y","US10Y","US30Y"]
+SYMS = ["US1M","US2M","US3M","US4M","US6M","US1Y","US2Y","US3Y","US5Y","US7Y","US10Y","US20Y","US30Y"]
 URL = ("https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=" + "|".join(SYMS) +
        "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "data", "treasury.json")

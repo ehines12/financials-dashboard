@@ -2,7 +2,7 @@
    Falls back per-symbol to the last good snapshot (data/treasury.json from the refresh workflow,
    or the last live pull cached in this browser), clearly marked stale. Never invents numbers. */
 (function () {
-  const SYMS = [["US1M","1M"],["US3M","3M"],["US6M","6M"],["US1Y","1Y"],["US2Y","2Y"],["US5Y","5Y"],["US10Y","10Y"],["US30Y","30Y"]];
+  const SYMS = [["US1M","1M"],["US2M","2M"],["US3M","3M"],["US4M","4M"],["US6M","6M"],["US1Y","1Y"],["US2Y","2Y"],["US3Y","3Y"],["US5Y","5Y"],["US7Y","7Y"],["US10Y","10Y"],["US20Y","20Y"],["US30Y","30Y"]];
   const URL = "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=" +
     SYMS.map(s => s[0]).join("|") + "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json";
   const LS = "tsyQuotesLastGood";
@@ -19,11 +19,10 @@
   const fmtBp = v => v == null ? "–" : (v > 0 ? "+" : "") + v.toFixed(1) + " bp";
   function render() {
     const get = s => live[s] ? Object.assign({ stale: false }, live[s]) : (snap[s] ? Object.assign({ stale: true }, snap[s]) : null);
-    let cells = SYMS.map(([s, lbl]) => {
+    let cells = SYMS.filter(([s]) => get(s)).map(([s, lbl]) => {
       const q = get(s);
-      if (!q) return `<div class="tq stale"><span class="tl">${lbl}</span><b>–</b><span class="tc na">stale · no quote</span></div>`;
       const c = bp(q.last, q.prev), cls = c == null ? "na" : c > 0 ? "bad" : c < 0 ? "good" : "na";
-      return `<div class="tq${q.stale ? " stale" : ""}" title="${q.stale ? "STALE: last good quote (" + q.src + ")" : "live"} · ${ct(q.time)}"><span class="tl">${lbl}${q.stale ? ' <i>stale</i>' : ""}</span><b>${q.last.toFixed(3)}%</b><span class="tc ${cls}">${fmtBp(c)}</span></div>`;
+      return `<div class="tq${q.stale ? " stale" : ""}" title="${q.stale ? "STALE: last good quote (" + q.src + ")" : "live"} · ${ct(q.time)}"><span class="tl">${lbl}${q.stale ? ' <i>stale</i>' : ""}</span><b>${q.last.toFixed(3)}%</b><span class="tc ${cls}">${fmtBp(c)}</span><span class="tt">${ct(q.time).replace(/^\w+ \d+, /, "")}</span></div>`;
     });
     const spread = (a, b, lbl) => {
       const qa = get(a), qb = get(b);
